@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ahmed sapp</title>
+  <style>
+    :root {
+      --bg: #111827; --panel: #0c1320; --muted: #9ca3af; --accent: #10b981;
+      --bubble: #1f2937; --me: #059669; --glass: rgba(255, 255, 255, 0.05);
+      --radius: 10px; --shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      font-family: 'Segoe UI', Roboto, 'Noto Kufi Arabic', Tahoma, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%; margin: 0; background: linear-gradient(180deg, var(--bg), #071021); color: #e6eef3;
+    }
+    .app {
+      max-width: 1100px; margin: 20px auto; height: 86vh; display: grid;
+      grid-template-columns: 320px 1fr; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow);
+    }
+    /* LEFT: contacts */
+    .sidebar {
+      background: linear-gradient(180deg, var(--panel), #071322); padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--me));
+      display: flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+    .brand h1 { font-size: 16px; margin: 0; }
+    .search { display: flex; gap: 8px; }
+    .search input {
+      flex: 1; padding: 10px; border-radius: var(--radius); border: 0;
+      background: var(--glass); color: inherit;
+    }
+    .search button {
+      padding: 10px; border-radius: var(--radius); border: 0;
+      background: var(--accent); color: #012; cursor: pointer;
+    }
+    .contacts { overflow: auto; padding-right: 6px; }
+    .contact {
+      display: flex; align-items: center; gap: 10px; padding: 10px;
+      border-radius: var(--radius); cursor: pointer;
+    }
+    .contact:hover { background: rgba(255, 255, 255, 0.02); }
+    .avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(45deg, #334155, var(--me));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; flex-shrink: 0; position: relative;
+    }
+    .meta { flex: 1; overflow: hidden; }
+    .meta .name { font-weight: 600; }
+    .meta .last {
+      color: var(--muted); font-size: 13px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* RIGHT: chat */
+    .chat {
+      background: linear-gradient(180deg, #06121a, #071526);
+      display: flex; flex-direction: column;
+    }
+    .chat-header {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .chat-main {
+      flex: 1; overflow: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .messages {
+      display: flex; flex-direction: column; gap: 10px; max-width: 760px;
+      width: 100%; margin-left: auto; margin-right: auto;
+    }
+    .bubble {
+      padding: 10px 14px; border-radius: 14px; max-width: 70%;
+      background: var(--bubble); box-shadow: 0 4px 12px rgba(2, 6, 23, 0.6);
+      word-wrap: break-word;
+    }
+    .bubble.me {
+      margin-left: auto; background: linear-gradient(135deg, var(--me), #047857); color: #fff;
+    }
+    .meta-time {
+      font-size: 12px; color: var(--muted); margin-top: 6px;
+    }
+    .input-area {
+      padding: 12px; border-top: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex; gap: 8px; align-items: center;
+    }
+    .input-area textarea {
+      flex: 1; min-height: 44px; padding: 10px; border-radius: var(--radius);
+      border: 0; background: var(--glass); resize: none; color: inherit;
+    }
+    .btn {
+      padding: 10px 12px; border-radius: var(--radius); border: 0;
+      background: var(--accent); color: #012; cursor: pointer;
+    }
+    .small { font-size: 13px; color: var(--muted); }
+    .attachment-preview {
+      display: flex; gap: 8px; align-items: center; margin-top: 8px;
+    }
+    .thumb {
+      width: 72px; height: 72px; border-radius: 8px; overflow: hidden;
+      background: #0a1220; display: flex; align-items: center; justify-content: center;
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; height: 95vh; margin: 8px; }
+      .sidebar { display: none; }
+      .chat { border-radius: 12px; }
+    }
+
+    .status { font-size: 13px; color: var(--muted); }
+    .controls { display: flex; gap: 8px; }
+    .toast {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px;
+      background: #06202a; padding: 10px 14px; border-radius: 8px;
+      color: var(--muted); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6); z-index: 100;
+    }
+    .online-indicator {
+      position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px;
+      background: #6b7280; border-radius: 50%; border: 2px solid var(--panel);
+    }
+    .online-indicator.active { background: var(--accent); }
+    .status-ticks {
+      font-size: 14px; font-weight: bold; color: var(--muted);
+      display: inline-block; margin-right: 3px;
+    }
+    .status-ticks.delivered { color: var(--accent); }
+    .empty-chat {
+      margin: auto; text-align: center; color: var(--muted);
+    }
+    .empty-chat-icon { font-size: 48px; margin-bottom: 10px; }
+
+    .msg-wrapper {
+      display: flex;
+      flex-direction: column;
+      max-width: 100%; 
+    }
+    .msg-wrapper.me {
+      align-items: flex-end;
+      position: relative; 
+    }
+    .msg-wrapper.other {
+      align-items: flex-start;
+    }
+    .delete-btn {
+      position: absolute;
+      left: -5px; 
+      top: 50%;
+      transform: translateY(-50%);
+      background: #dc2626; 
+      color: white;
+      border: 0;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      opacity: 0; 
+      transition: opacity 0.2s;
+      font-size: 12px;
+      line-height: 24px;
+      padding: 0;
+    }
+    .msg-wrapper.me:hover .delete-btn {
+      opacity: 1; 
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app" role="application">
+    <aside class="sidebar" aria-label="قائمة جهات الاتصال">
+      <div class="brand">
+        <div class="logo">A</div>
+        <div>
+          <h1>ahmed sapp</h1>
+        </div>
+      </div>
+      <div class="search">
+        <input id="searchInput" placeholder="ابحث عن جهة اتصال أو رسالة">
+        <button id="newChatBtn" title="محادثة جديدة">+</button>
+      </div>
+      <div class="contacts" id="contactsList" aria-live="polite"></div>
+    </aside>
+
+    <main class="chat" aria-label="نافذة المحادثة">
+      <header class="chat-header">
+        <div class="avatar" id="chatAvatar">؟</div>
+        <div style="flex:1">
+          <div id="chatName" style="font-weight:700">اختر محادثة</div>
+          <div class="status" id="chatStatus">ابدأ محادثة جديدة</div>
+        </div>
+        <div class="controls">
+          <button class="btn" id="exportBtn">حفظ نسخة</button>
+          <button class="btn" id="clearBtn">مسح</button>
+        </div>
+      </header>
+      <section class="chat-main">
+        <div class="messages" id="messages"></div>
+      </section>
+      <div class="input-area">
+        <input type="file" id="attachInput" accept="image/*" style="display:none">
+        <button class="btn" id="attachBtn" title="إرفاق صورة">📎</button>
+        <textarea id="inputMsg" placeholder="اكتب رسالة..." aria-label="نص الرسالة"></textarea>
+        <button class="btn" id="sendBtn">إرسال</button>
+      </div>
+      <div style="padding:0 16px 12px" id="attachPreviewContainer"></div>
+    </main>
+  </div>
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <script>
+    'use strict';
+    
+    const STORAGE_KEY = 'ahmedChat-data-v1';
+    const sampleContacts = [
+      { id: 'c1', name: 'شريف', bio: 'صديق قديم', avatarText: 'ش', online: true },
+      { id: 'c2', name: 'سارة', bio: 'زميلة عمل', avatarText: 'س', online: false },
+      { id: 'c3', name: 'علي', bio: 'أخويا', avatarText: 'ع', online: true }
+    ];
+
+    let state = {
+      contacts: [], conversations: {}, current: null, draft: '', attachments: []
+    };
+
+    // ====== أدوات مساعدة ======
+    function nowTs() { return new Date().toISOString(); }
+    function timeLabel(ts) {
+      if (!ts) return '';
+      try {
+        const d = new Date(ts);
+        return d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) { return ''; }
+    }
+    function getStatusTicks(status) {
+      if (status === 'delivered') return '<span class="status-ticks delivered">✓✓</span>';
+      if (status === 'sent') return '<span class="status-ticks">✓</span>';
+      return '';
+    }
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        // تم تعطيل التنبيه المزعج مع كل حفظ
+        // showToast('تم حفظ البيانات محلياً');
+      } catch (e) { console.error("Failed to save state:", e); }
+    }
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          state = JSON.parse(raw);
+          if (!state.attachments) state.attachments = [];
+        } catch (e) { initDefault(); }
+      } else { initDefault(); }
+    }
+    function initDefault() {
+      state.contacts = sampleContacts;
+      state.conversations = {
+        c1: [{ id: 'm1', from: 'c1', text: 'مرحباً بك! هذا شات أحمد :)', ts: nowTs(), status: 'delivered' }],
+        c2: [], c3: []
+      };
+      state.current = null; state.attachments = [];
+      saveState();
+    }
+
+    // ====== تحديث الواجهة ======
+    const contactsList = document.getElementById('contactsList');
+    const messagesEl = document.getElementById('messages');
+    const chatName = document.getElementById('chatName');
+    const chatStatus = document.getElementById('chatStatus');
+    const chatAvatar = document.getElementById('chatAvatar');
+    const inputMsg = document.getElementById('inputMsg');
+    const sendBtn = document.getElementById('sendBtn');
+    const attachBtn = document.getElementById('attachBtn');
+    const attachInput = document.getElementById('attachInput');
+    const attachPreviewContainer = document.getElementById('attachPreviewContainer');
+    const searchInput = document.getElementById('searchInput');
+
+    function renderContacts(filter = '') {
+      contactsList.innerHTML = '';
+      const filterLower = filter.toLowerCase();
+      const items = state.contacts.filter(c => {
+        const lastMsg = (state.conversations[c.id] || []).slice(-1)[0];
+        const searchText = (c.name + ' ' + (lastMsg?.text || c.bio || '')).toLowerCase();
+        return searchText.includes(filterLower);
+      });
+      items.forEach(c => {
+        const lastMsg = (state.conversations[c.id] || []).slice(-1)[0];
+        const el = document.createElement('div');
+        el.className = 'contact';
+        if (c.id === state.current) { el.style.background = 'rgba(255,255,255,0.05)'; }
+        el.tabIndex = 0;
+        el.innerHTML = `
+          <div class="avatar">
+            ${c.avatarText}
+            <div class="online-indicator ${c.online ? 'active' : ''}"></div>
+          </div>
+          <div class="meta">
+            <div class="name">${c.name}</div>
+            <div class="last">${lastMsg ? (lastMsg.type === 'image' ? 'صورة' : lastMsg.text) : c.bio}</div>
+          </div>
+        `;
+        el.addEventListener('click', () => { openChat(c.id); });
+        contactsList.appendChild(el);
+      });
+    }
+
+    function renderChat() {
+      messagesEl.innerHTML = '';
+      if (!state.current) {
+        chatName.textContent = 'اختر محادثة';
+        chatStatus.textContent = 'ابدأ محادثة جديدة';
+        chatAvatar.textContent = '؟';
+        messagesEl.innerHTML = `
+          <div class="empty-chat">
+            <div class="empty-chat-icon">💬</div>
+            <p>اختر جهة اتصال من القائمة الجانبية<br>لبدء الدردشة.</p>
+          </div>
+        `;
+        return;
+      }
+      const contact = state.contacts.find(x => x.id === state.current);
+      if (!contact) { state.current = null; renderChat(); return; }
+      
+      chatName.textContent = contact.name;
+      // === تعديل هنا === (تأكد من أن "يكتب الآن" لا يتم استبدالها)
+      if (!chatStatus.textContent.includes('...')) {
+         chatStatus.textContent = contact.online ? 'متصل' : 'غير متصل';
+      }
+      chatAvatar.textContent = contact.avatarText;
+      
+      const conv = state.conversations[state.current] || [];
+      
+      if (conv.length === 0) {
+        messagesEl.innerHTML = `
+          <div class="empty-chat">
+            <div class="empty-chat-icon">👋</div>
+            <p>لا توجد رسائل هنا بعد.<br>قل مرحباً لـ ${contact.name}!</p>
+          </div>
+        `;
+      } else {
+        conv.forEach(m => {
+          const b = document.createElement('div');
+          b.className = 'bubble ' + (m.from === 'me' ? 'me' : '');
+          
+          if (m.type === 'image') {
+            b.innerHTML = `<div class="thumb"><img src="${m.src}" alt="attachment"></div>`;
+            b.style.padding = '4px';
+          } else {
+            b.textContent = m.text;
+          }
+          
+          const time = document.createElement('div');
+          time.className = 'meta-time';
+          const statusTicks = m.from === 'me' ? getStatusTicks(m.status) : '';
+          time.innerHTML = timeLabel(m.ts) + statusTicks;
+          
+          // === تعديل هنا (استخدام الغلاف الجديد وزر الحذف) ===
+          const wrapper = document.createElement('div');
+          wrapper.className = 'msg-wrapper ' + (m.from === 'me' ? 'me' : 'other');
+          
+          wrapper.appendChild(b);
+          wrapper.appendChild(time);
+          
+          if (m.from === 'me') {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '🗑️';
+            deleteBtn.title = 'حذف الرسالة';
+            deleteBtn.dataset.messageId = m.id; // نربط الزر بـ ID الرسالة
+            deleteBtn.addEventListener('click', handleDeleteMessage);
+            wrapper.appendChild(deleteBtn);
+          }
+
+          messagesEl.appendChild(wrapper);
+        });
+      }
+      messagesEl.parentElement.scrollTop = messagesEl.parentElement.scrollHeight;
+      inputMsg.value = state.draft || '';
+      renderAttachmentsPreview();
+    }
+
+    function handleDeleteMessage(event) {
+      const btn = event.currentTarget;
+      const messageId = btn.dataset.messageId;
+      if (!messageId || !state.current) return;
+
+      if (!confirm('هل أنت متأكد من حذف هذه الرسالة؟')) return;
+
+      const conv = state.conversations[state.current];
+      if (!conv) return;
+
+      const messageIndex = conv.findIndex(m => m.id === messageId);
+      
+      if (messageIndex > -1) {
+        conv.splice(messageIndex, 1); 
+        saveState();
+        renderChat();
+        renderContacts(searchInput.value); 
+        showToast('تم حذف الرسالة');
+      } else {
+        console.error('Message not found for deletion:', messageId);
+      }
+    }
+
+    function openChat(id) {
+      if(state.current) { state.draft = inputMsg.value; }
+      state.current = id;
+      state.draft = ''; 
+      renderChat();
+      renderContacts(searchInput.value);
+    }
+
+    function sendMessage() {
+      if (!state.current) return showToast('الرجاء اختيار محادثة أولاً');
+      const text = inputMsg.value.trim();
+      if (!text && state.attachments.length === 0) {
+        return showToast('أضف نص أو مرفق أولاً');
+      }
+      const conv = state.conversations[state.current] || (state.conversations[state.current] = []);
+
+      state.attachments.forEach(att => {
+        conv.push({ id: 'm' + Math.random().toString(36).slice(2, 9), from: 'me', type: 'image', src: att, ts: nowTs(), status: 'sent' });
+      });
+      if (text) {
+        conv.push({ id: 'm' + Math.random().toString(36).slice(2, 9), from: 'me', text, ts: nowTs(), status: 'sent' });
+      }
+
+      inputMsg.value = ''; state.draft = ''; state.attachments = [];
+      attachPreviewContainer.innerHTML = '';
+      
+      saveState();
+      renderChat();
+      renderContacts(searchInput.value);
+
+      setTimeout(() => {
+        const lastSent = conv.filter(m => m.from === 'me' && m.status === 'sent');
+        lastSent.forEach(m => m.status = 'delivered');
+        if (lastSent.length > 0) { saveState(); renderChat(); }
+      }, 900);
+      
+      const contact = state.contacts.find(c => c.id === state.current);
+      if (contact && contact.online) {
+        // === تعديل هنا (إضافة مؤشر الكتابة) ===
+        // 1. إظهار "يكتب الآن"
+        setTimeout(() => {
+          // نتأكد أننا مازلنا في نفس الشات
+          if (state.current === contact.id) {
+            chatStatus.textContent = '...يكتب الآن ✍️';
+          }
+        }, 1100); // يظهر بعد 1.1 ثانية
+
+        // 2. إظهار الرد (بعدها بـ 400ms)
+        setTimeout(() => {
+          if (state.current === contact.id) {
+            const replyText = text ? `تم استلام رسالتك: "${text.slice(0, 40)}..."` : 'تم استلام الصورة، شكراً لك!';
+            const reply = {
+              id: 'm' + Math.random().toString(36).slice(2, 9),
+              from: contact.id, text: replyText, ts: nowTs(), status: ''
+            };
+            state.conversations[state.current].push(reply);
+            saveState();
+            renderChat(); // هذا السطر سيعيد الحالة لـ "متصل" تلقائياً
+            renderContacts(searchInput.value);
+          }
+        }, 1800); // تم زيادة التأخير قليلاً ليناسب مؤشر الكتابة
+      }
+      // === نهاية التعديل ===
+    }
+    
+    // ====== Attachments ======
+    attachBtn.addEventListener('click', () => attachInput.click());
+    attachInput.addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      if(state.attachments.length > 0) {
+          showToast('يمكنك إرفاق صورة واحدة فقط حالياً'); return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => { state.attachments.push(reader.result); renderAttachmentsPreview(); };
+      reader.readAsDataURL(f);
+      attachInput.value = null;
+    });
+    function renderAttachmentsPreview() {
+      attachPreviewContainer.innerHTML = '';
+      if (state.attachments.length === 0) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'attachment-preview';
+      state.attachments.forEach((src, idx) => {
+        const t = document.createElement('div'); t.className = 'thumb';
+        t.innerHTML = `<img src="${src}" alt="preview ${idx}">`;
+        wrap.appendChild(t);
+      });
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'btn'; clearBtn.textContent = 'مسح المرفقات';
+      clearBtn.style.background = '#b91c1c'; clearBtn.style.color = '#fff';
+      clearBtn.addEventListener('click', () => {
+        state.attachments = []; renderAttachmentsPreview();
+      });
+      attachPreviewContainer.appendChild(wrap);
+      attachPreviewContainer.appendChild(clearBtn);
+    }
+
+    // ====== search, new chat, export, clear ======
+    searchInput.addEventListener('input', (e) => renderContacts(e.target.value));
+    document.getElementById('newChatBtn').addEventListener('click', () => {
+      const name = prompt('اسم جهة الاتصال الجديدة:');
+      if (!name) return;
+      const id = 'c' + Math.random().toString(36).slice(2, 8);
+      const item = { id, name, bio: 'جهة اتصال جديدة', avatarText: name.trim()[0] || '؟', online: false };
+      state.contacts.unshift(item); state.conversations[item.id] = [];
+      saveState(); renderContacts(); openChat(item.id);
+    });
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      try {
+        const data = JSON.stringify(state, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url;
+        a.download = 'ahmed-chat-backup.json'; a.click();
+        URL.revokeObjectURL(url); showToast('تم تصدير النسخة الاحتياطية');
+      } catch (e) { showToast('فشل تصدير النسخة'); }
+    });
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      if (confirm('هل أنت متأكد أنك تريد مسح كل المحادثات؟ هذا سيحذف كل شيء!')) {
+        localStorage.removeItem(STORAGE_KEY); initDefault();
+        renderContacts(); renderChat(); showToast('تم مسح جميع البيانات');
+      }
+    });
+
+    // ====== keyboard shortcuts and send ======
+    sendBtn.addEventListener('click', sendMessage);
+    inputMsg.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+    function showToast(t) {
+      const toast = document.getElementById('toast');
+      toast.textContent = t; toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+    // ====== init ======
+    loadState(); renderContacts(); renderChat();
+    window.ahmedChatState = state;
+  </script>
+</body>
+</html>
